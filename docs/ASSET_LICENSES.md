@@ -1,6 +1,10 @@
 # SpaceSIM — third-party asset provenance
 
-All ship assets listed below are from **Quaternius, Ultimate Spaceships Pack (May 2021)**, released under **CC0 1.0 Universal** (commercial modification and redistribution permitted; attribution not required). Credit is voluntarily included.
+The **Insurgent and Bob** assets listed below are from **Quaternius, Ultimate Spaceships Pack (May 2021)**, released under **CC0 1.0 Universal** (commercial modification and redistribution permitted; attribution not required). Credit is voluntarily included.
+
+**Additional authored ship models:** Watson and Pythagoras by **Viktor Hahn**, **CC BY 4.0**; their license *requires attribution*. Source, required credits, original filenames and SHA-256 digests are preserved in [PROTERON_CREDITS.md](PROTERON_CREDITS.md) and `public/assets/ships/proteron-manifest.json`.
+
+**Original textured assets:** Vanguard ship geometry and Asterion station geometry are SpaceSIM creations. Poly Haven by Rob Tuytel supplies separately licensed CC0 PBR material maps as documented in [PBR_ASSETS.md](PBR_ASSETS.md).
 
 - Author and canonical license: [Quaternius — Ultimate Spaceships](https://quaternius.com/packs/ultimatespaceships.html), [CC0](https://creativecommons.org/publicdomain/zero/1.0/).
 - Mirror for deterministic retrieval: `euuuuuuan/voidclad-public`, GitHub commit `440916aabc30abe014cb33ad90bd150bfbf22dd0`. These are the same self-contained Quaternius glTF exports as documented in that repository's `THIRD_PARTY_ASSETS.md`.

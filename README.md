@@ -2,14 +2,38 @@
 
 Playable browser-based space flight prototype built on a deterministic TypeScript simulation core.
 
-## 🚀 Art Pass 2.0 — available now
+## 🚀 Art Pass 4.0 — prawdziwe statki PBR i modułowa stocznia
 
-The previous hand-built prototype has been joined by **two real CC0 Quaternius spacecraft**, Insurgent and Bob. Open the game and use the **HANGAR PORÓWNAWCZY** panel (upper-right) to switch among **INSURGENT**, **BOB**, and original **ISKRA 0.1**. The choice does not modify physics or save data. You can share a direct preview using `?ship=insurgent`, `?ship=bob`, or `?ship=prototype`.
+SpaceSIM ma teraz **6 modeli do porównania**: Watson i Pythagoras (pełnoteksturowane
+modele GLB od Viktora Hahna, **CC BY 4.0**), Vanguard (autorski statek z mapami
+PBR Poly Haven), Insurgent i Bob (Quaternius, CC0) oraz klasyczną Iskrę.
 
-Improvements include glTF loading, PBR material tuning, image-based reflections, brighter lighting, soft exhaust glow, and toggleable bloom. The original source artists retain credit; assets are tracked in [ASSET_LICENSES](docs/ASSET_LICENSES.md) and the changes documented in [ART_PASS_2](docs/ART_PASS_2.md). This is an **art comparison**, not yet final X4-grade photorealism.
+Domyślnym modelem na nowym profilu przeglądarki jest **Watson**. Przełączanie
+modeli odbywa się w **Hangarze porównawczym** bez zmiany parametrów fizyki.
+Można użyć `?ship=proteron-a`, `?ship=proteron-b`, `?ship=vanguard`,
+`?ship=insurgent` lub `?ship=bob`.
 
-**Real game captures:** [Insurgent](docs/screenshots/ship-insurgent-artpass2.png) · [Bob](docs/screenshots/ship-bob-artpass2.png).
- **Original** ship, station, beacon and asteroid meshes (procedural Three.js geometry). The separate desktop .NET project in `misza3444/spacesim` is untouched.
+**Stocznia Asterion** zastępuje dawny prosty przekaźnik: 12 stanowisk
+dokowania, system dźwigów, moduły produkcyjne, trawersy i anteny. Statyczne
+części są łączone w mniejszą liczbę draw calli. Tekstury PBR pochodzą z
+Poly Haven CC0 (lokalnie zapisane mapy diffuse, normal i ARM).
+
+### Rzeczywiste zrzuty z gry
+
+- [Watson — statek PBR](docs/screenshots/ship-proteron-a-artpass4.png)
+- [Pythagoras — statek PBR](docs/screenshots/ship-proteron-b-artpass4.png)
+- [Vanguard — autorski kadłub i stocznia](docs/screenshots/ship-vanguard-artpass4.png)
+
+**Obowiązkowe informacje o autorstwie modeli Proteron:**
+[PROTERON_CREDITS.md](docs/PROTERON_CREDITS.md).
+Pozostałe zasoby:
+[ASSET_LICENSES.md](docs/ASSET_LICENSES.md),
+[PBR_ASSETS.md](docs/PBR_ASSETS.md),
+[ART_PASS_4.md](docs/ART_PASS_4.md).
+
+Jakość obrazu w przeglądarce jest potwierdzona zrzutami z GitHub Actions,
+ale **60 FPS na komputerze gracza nie jest jeszcze zmierzone**.
+Stocznia nadal nie ma przechodnich wnętrz ani działającego dokowania.
 
 ## Quick start
 
