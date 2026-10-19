@@ -138,22 +138,22 @@ export class SpaceView {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.75));
     this.renderer.outputColorSpace=THREE.SRGBColorSpace;
     this.renderer.toneMapping=THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure=1.25;
+    this.renderer.toneMappingExposure=0.98;
     const studio=new RoomEnvironment();
     const generator=new THREE.PMREMGenerator(this.renderer);
     this.environmentTarget=generator.fromScene(studio,0.06);
     this.scene.environment=this.environmentTarget.texture;
-    this.scene.environmentIntensity=0.72;
+    this.scene.environmentIntensity=0.40;
     studio.dispose();generator.dispose();
     host.append(this.renderer.domElement);
-    this.scene.add(new THREE.AmbientLight(0x8fb0db,1.3));
-    this.scene.add(new THREE.HemisphereLight(0x9fd5ff,0x20354f,2.1));
-    const rim=new THREE.DirectionalLight(0x50baf5,2.6);
+    this.scene.add(new THREE.AmbientLight(0x8fb0db,0.65));
+    this.scene.add(new THREE.HemisphereLight(0x9fd5ff,0x20354f,0.92));
+    const rim=new THREE.DirectionalLight(0x50baf5,1.15);
     rim.position.set(15,8,35);this.scene.add(rim);
-    const bounce=new THREE.DirectionalLight(0xffbf8b,1.2);
+    const bounce=new THREE.DirectionalLight(0xffbf8b,0.64);
     bounce.position.set(-30,-15,-12);this.scene.add(bounce);
     const sun=catalog.sector.sun;
-    const sunLight=new THREE.DirectionalLight(0xffe4c6,3.2);
+    const sunLight=new THREE.DirectionalLight(0xffe4c6,1.8);
     sunLight.position.copy(vector(sun.position));this.scene.add(sunLight);
     const sunMesh=new THREE.Mesh(new THREE.SphereGeometry(sun.radius,20,14),
       new THREE.MeshBasicMaterial({color:sun.color}));
@@ -172,18 +172,18 @@ export class SpaceView {
     this.scene.add(this.stars);this.scene.add(this.ship);
     this.ship.add(this.oldHull);
     const glowMaterial=new THREE.SpriteMaterial({
-      map:radialGlowTexture(),color:0x55cffa,transparent:true,opacity:0.70,
+      map:radialGlowTexture(),color:0x55cffa,transparent:true,opacity:0.33,
       depthWrite:false,blending:THREE.AdditiveBlending
     });
     const exhaust=new THREE.Sprite(glowMaterial);
-    exhaust.position.set(0,-0.2,8);exhaust.scale.set(8,8,1);
+    exhaust.position.set(0,-0.2,8);exhaust.scale.set(6.5,6.5,1);
     this.engineGlow.add(exhaust);
-    const engineLight=new THREE.PointLight(0x269efb,15,30);
+    const engineLight=new THREE.PointLight(0x269efb,3,18);
     engineLight.position.set(0,-0.2,7);this.engineGlow.add(engineLight);
     this.ship.add(this.engineGlow);
     this.composer=new EffectComposer(this.renderer);
     this.composer.addPass(new RenderPass(this.scene,this.camera));
-    this.composer.addPass(new UnrealBloomPass(new THREE.Vector2(800,600),0.62,0.3,0.91));
+    this.composer.addPass(new UnrealBloomPass(new THREE.Vector2(800,600),0.22,0.24,1.18));
     this.composer.addPass(new OutputPass());
     this.camera.add(this.cockpit);this.scene.add(this.camera);
     this.setCameraMode('chase');

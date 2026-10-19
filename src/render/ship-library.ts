@@ -51,8 +51,8 @@ export function prepareImportedShip(root: THREE.Group): THREE.Group {
       if (!(material instanceof THREE.MeshStandardMaterial)) continue;
       // Preserve original Quaternius diffuse textures while giving hulls controlled
       // specular response. This is a PBR-tuned material, not a 4K PBR texture set.
-      material.metalness = 0.34;
-      material.roughness = 0.48;
+      material.metalness = 0.22;
+      material.roughness = 0.62;
       material.envMapIntensity = 1;
       material.needsUpdate = true;
     }
