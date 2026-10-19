@@ -1,31 +1,31 @@
-# SpaceSim Web — Architecture (Stage 0)
+# Architecture — Stage 1
 
-- `src/sim/`: pure TypeScript simulation. No DOM, WebGL, Three.js, clock APIs or Math.random. State is JSON-serializable; simulation updates run at a fixed 1/60s.
-- `src/render/`: Three.js WebGL view. Can render independently of simulation. Renderer reads snapshots only; interpolation factor is supplied by fixed-step loop.
-- `src/ui/`: UI renders snapshots and translates user intent into commands. It never directly edits the simulation state.
-- `src/storage/`: IndexedDB saves, versioned envelope and migration function. Time of saving is metadata, not part of deterministic simulation state.
-- `src/data/` + `data/`: JSON definitions parsed and cross-referenced using Zod before use.
-- `src/i18n/`: PL and EN catalogues.
-- `scripts/`: headless simulation with injected seed and tick count.
+## Ownership
 
-## Flow
+- `src/sim/` — **pure TS without DOM, WebGL, Three.js or browser clock**, fixed timestep 60Hz, serializable world. The pilot's quaternion, position, velocity, angular velocity, flight-assist state, target and travel phase live in `WorldState.pilot`.
+- `src/input/controls.ts` — browser-facing keyboard, mouse pointer lock, gamepad poll, remapping stored in localStorage. Returns normalized flight controls and debounced action toggles.
+- `src/render/scene.ts` — Three.js procedural meshes and scene lights, two camera poses, interpolated position/quaternion, 3D-to-screen target projection.
+- `src/ui/dashboard.ts` — cockpit HUD, radar display and key binding panel. Writes to `CommandBus`, not to game objects or world state.
+- `src/storage/saves.ts` — IndexedDB save schema envelope; legacy stage 0 worlds without pilot receive a default pilot at runtime. No breaking envelope change.
+- `src/data/catalog.ts` — Zod validators for ships, sector objects and economy sample data; no hardcoded ship performance data inside the integrator.
+- `data/` — data-driven ship physics, static hand-authored test sector, PL/EN localization and initial economy definitions.
 
-UI -> CommandBus.enqueue(command) -> Simulation.step() drains queue -> systems update ECS data -> events emitted -> UI reads cloned snapshot. Browser loop uses accumulator; render is invoked per presentation frame and accepts interpolation alpha. Headless runs only simulation.
+## Fixed update
 
-## Simulation
+`requestAnimationFrame -> FixedStepClock.advance -> controls.sample -> queue command -> Simulation.step(1/60) -> immutable snapshot -> SpaceView.draw(previous, current, alpha) -> HUD`.
 
-State consists of `schemaVersion`, `seed`, `rngState`, `tick`, `nextEntityId`, and a serializable list of entities (component bags). The seed initializes the xorshift32 RNG. Entity spawning and future simulation randomness must use this generator only. Fixed step = 1/60s. No simulated entities at initial load; the debug UI can enqueue a test spawn.
+Keyboard toggles and gamepad buttons enter the same command bus as flight input. Rendering never mutates simulation state. The rasterized HUD radar displays relative local XYZ positions projected onto a tilted 2D radar plane with vertical-height indicators.
 
-Tick frequencies for AI and economy belong to future phases; the Stage 0 clock provides a deterministic 60Hz baseline, but does not pretend to implement AI/economy.
+## Flight and safety
 
-## High/low attention
+Local controls use right +X, up +Y, forward −Z. Translation forces are rotated to world coordinates by current quaternion and divided by mass. Flight assist brakes uncommanded lateral/vertical/forward velocity, and applies stronger angular damping at zero angular input. Travel mode steers velocity towards current heading while the forward obstacle corridor forces exit to cooldown. Collision **response** is not yet simulated; object proximity currently only affects travel disengagement.
 
-Future boundary: both high-attention and low-attention systems will modify the same canonical serializable state using commands and events. No low-attention economy, materialization or distant combat exists yet.
+`src/sim/flight.ts` remains testable headless. Random test stars are rendering-only and are initialized with a deterministic xorshift sequence.
 
-## Save policy
+## Versioned saves
 
-IndexedDB database `spacesim-web` version 1 contains `saves` object store keyed by `slotId`. Envelope version 0 migrates to 1 on read; unknown future versions are rejected. State snapshots are schema validated. Save operations happen at the UI action boundary, not mid-step.
+Additive `pilot?` field maintains WorldState schemaVersion 1 backward compatibility with Stage 0 save envelopes. Loaders preserve existing data, and the Simulation constructor initializes missing pilot state. Existing save migration tests remain in place.
 
-## Performance targets (not yet claims)
+## Performance
 
-60 FPS around 150 visible ships and several thousand instanced objects, 300–600 off-sector AI. Benchmark only once matching mechanics exist.
+Current renderer has one draw for the star Points collection and a small number of primitive meshes; no physics engine or shader post-processing. It limits DPR to 1.75, and the HUD readouts update every ~120 ms. The goal of 60 FPS must be checked on actual hardware; CI's unit tests do not provide GPU benchmarks.
