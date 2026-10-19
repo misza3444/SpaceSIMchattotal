@@ -3,6 +3,7 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { loadShipVisual, SHIP_VISUALS, type ShipVisualId } from './ship-library';
 import type { Catalog } from '../data/catalog';
 import type { PilotState, WorldState } from '../sim/types';
@@ -19,6 +20,20 @@ function material(color: number, metalness=0.6, emissive=0):THREE.MeshStandardMa
 function box(parent:THREE.Object3D, size: [number,number,number], pos:[number,number,number], mat:THREE.Material): THREE.Mesh {
   const mesh=new THREE.Mesh(new THREE.BoxGeometry(...size),mat);
   mesh.position.set(...pos);parent.add(mesh);return mesh;
+}
+function radialGlowTexture():THREE.DataTexture {
+  const n=64, pixels=new Uint8Array(n*n*4);
+  for(let y=0;y<n;y++)for(let x=0;x<n;x++){
+    const dx=(x+0.5-n/2)/(n/2),dy=(y+0.5-n/2)/(n/2);
+    const r2=dx*dx+dy*dy;
+    const falloff=Math.pow(Math.max(0,1-r2),4);
+    const index=(y*n+x)*4;
+    pixels[index]=255; pixels[index+1]=255; pixels[index+2]=255;
+    pixels[index+3]=Math.round(255*falloff);
+  }
+  const result=new THREE.DataTexture(pixels,n,n,THREE.RGBAFormat);
+  result.needsUpdate=true;
+  return result;
 }
 function buildShip(): THREE.Group {
   const ship=new THREE.Group();
@@ -100,6 +115,7 @@ export class SpaceView {
   private readonly scene=new THREE.Scene();
   private readonly camera=new THREE.PerspectiveCamera(73,1,0.08,90000);
   private readonly renderer:THREE.WebGLRenderer;
+  private readonly environmentTarget:THREE.WebGLRenderTarget;
   private readonly ship=new THREE.Group();
   private readonly oldHull=buildShip();
   private readonly loadedHulls=new Map<ShipVisualId,THREE.Group>();
@@ -122,7 +138,13 @@ export class SpaceView {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.75));
     this.renderer.outputColorSpace=THREE.SRGBColorSpace;
     this.renderer.toneMapping=THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure=1.4;
+    this.renderer.toneMappingExposure=1.25;
+    const studio=new RoomEnvironment();
+    const generator=new THREE.PMREMGenerator(this.renderer);
+    this.environmentTarget=generator.fromScene(studio,0.06);
+    this.scene.environment=this.environmentTarget.texture;
+    this.scene.environmentIntensity=0.72;
+    studio.dispose();generator.dispose();
     host.append(this.renderer.domElement);
     this.scene.add(new THREE.AmbientLight(0x8fb0db,1.3));
     this.scene.add(new THREE.HemisphereLight(0x9fd5ff,0x20354f,2.1));
@@ -150,7 +172,7 @@ export class SpaceView {
     this.scene.add(this.stars);this.scene.add(this.ship);
     this.ship.add(this.oldHull);
     const glowMaterial=new THREE.SpriteMaterial({
-      color:0x55cffa,transparent:true,opacity:0.65,
+      map:radialGlowTexture(),color:0x55cffa,transparent:true,opacity:0.70,
       depthWrite:false,blending:THREE.AdditiveBlending
     });
     const exhaust=new THREE.Sprite(glowMaterial);
@@ -246,6 +268,7 @@ export class SpaceView {
       }
     });
     this.composer.dispose();
+    this.environmentTarget.dispose();
     this.renderer.dispose();this.renderer.domElement.remove();
   }
 }
