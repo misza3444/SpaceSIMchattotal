@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-export type ShipVisualId = 'insurgent' | 'bob' | 'prototype';
+export type ShipVisualId = 'vanguard' | 'insurgent' | 'bob' | 'prototype';
 export interface ShipVisualDefinition {
   id: ShipVisualId;
   label: string;
@@ -10,6 +10,10 @@ export interface ShipVisualDefinition {
   uri: string | null;
 }
 export const SHIP_VISUALS: readonly ShipVisualDefinition[] = [
+  {
+    id: 'vanguard', label: 'VANGUARD', source: 'SpaceSIM · pełny PBR',
+    description: 'Autorski okręt: panele PBR, wzmocnienia, dysze, radiatory', uri: null
+  },
   {
     id: 'insurgent', label: 'INSURGENT', source: 'Quaternius · CC0',
     description: 'Smukły kadłub — kandydat na myśliwiec', uri: '/assets/ships/insurgent.gltf'

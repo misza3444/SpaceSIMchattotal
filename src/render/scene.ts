@@ -5,6 +5,9 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { loadShipVisual, SHIP_VISUALS, type ShipVisualId } from './ship-library';
+import {createModularSpaceStation,applyStationPbr} from './station';
+import {createVanguardPbrShip,applyVanguardPbr} from './vanguard';
+import {loadPbrSets,releasePbrSets,type PbrTextureSet} from './pbr-materials';
 import type { Catalog } from '../data/catalog';
 import type { PilotState, WorldState } from '../sim/types';
 
@@ -118,6 +121,9 @@ export class SpaceView {
   private readonly environmentTarget:THREE.WebGLRenderTarget;
   private readonly ship=new THREE.Group();
   private readonly oldHull=buildShip();
+  private readonly vanguardHull=createVanguardPbrShip();
+  private readonly modularStation=createModularSpaceStation();
+  private pbrSets: {blue:PbrTextureSet;worn:PbrTextureSet}|null=null;
   private readonly loadedHulls=new Map<ShipVisualId,THREE.Group>();
   private readonly loadingHulls=new Map<ShipVisualId,Promise<THREE.Group>>();
   private visual:ShipVisualId='prototype';
@@ -160,7 +166,7 @@ export class SpaceView {
     sunMesh.position.copy(vector(sun.position));this.scene.add(sunMesh);
     for(const body of catalog.sector.bodies){
       let object:THREE.Object3D;
-      if(body.kind==='station')object=buildStation();
+      if(body.kind==='station')object=this.modularStation;
       else if(body.kind==='beacon')object=buildBeacon();
       else {
         const mesh=new THREE.Mesh(new THREE.IcosahedronGeometry(body.radius*0.85,2),
@@ -171,6 +177,15 @@ export class SpaceView {
     }
     this.scene.add(this.stars);this.scene.add(this.ship);
     this.ship.add(this.oldHull);
+    this.ship.add(this.vanguardHull);
+    this.vanguardHull.visible=false;
+    void loadPbrSets().then(sets=>{
+      this.pbrSets=sets;
+      applyStationPbr(this.modularStation,sets.blue,sets.worn);
+      applyVanguardPbr(this.vanguardHull,sets.blue,sets.worn);
+    }).catch(error=>{
+      console.warn('Local PBR textures unavailable; falling back to built-in materials',error);
+    });
     const glowMaterial=new THREE.SpriteMaterial({
       map:radialGlowTexture(),color:0x55cffa,transparent:true,opacity:0.33,
       depthWrite:false,blending:THREE.AdditiveBlending
@@ -199,6 +214,14 @@ export class SpaceView {
     if(id==='prototype'){
       this.visual=id;
       this.oldHull.visible=true;
+      this.vanguardHull.visible=false;
+      for(const hull of this.loadedHulls.values())hull.visible=false;
+      return;
+    }
+    if(id==='vanguard'){
+      this.visual=id;
+      this.oldHull.visible=false;
+      this.vanguardHull.visible=true;
       for(const hull of this.loadedHulls.values())hull.visible=false;
       return;
     }
@@ -218,6 +241,7 @@ export class SpaceView {
     if(this.requestedVisual!==id)return;
     this.visual=id;
     this.oldHull.visible=false;
+    this.vanguardHull.visible=false;
     for(const [other,hull] of this.loadedHulls)hull.visible=other===id;
   }
   getCanvas():HTMLCanvasElement{return this.renderer.domElement;}
@@ -269,6 +293,7 @@ export class SpaceView {
     });
     this.composer.dispose();
     this.environmentTarget.dispose();
+    if(this.pbrSets)releasePbrSets(this.pbrSets);
     this.renderer.dispose();this.renderer.domElement.remove();
   }
 }
