@@ -1,0 +1,3 @@
+[
+  { "id": "smelt_alloy", "inputs": [{ "wareId": "ore", "quantity": 2 }, { "wareId": "energy_cell", "quantity": 1 }], "outputs": [{ "wareId": "alloy", "quantity": 1 }], "cycleSeconds": 60 }
+]

@@ -1,0 +1,3 @@
+[
+  { "id": "alloy_foundry", "name": { "pl": "Odlewnia stopów", "en": "Alloy Foundry" }, "kind": "production", "recipeId": "smelt_alloy" }
+]

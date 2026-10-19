@@ -1,0 +1,20 @@
+{
+  "title": "SPACE SIM // FUNDAMENT",
+  "subtitle": "Symulacja deterministyczna • etap 0",
+  "seed": "Seed świata",
+  "tick": "Tick symulacji",
+  "fps": "FPS",
+  "entities": "Encje",
+  "save": "Zapisz",
+  "load": "Wczytaj",
+  "new": "Nowy świat",
+  "probe": "Dodaj encję testową",
+  "saved": "Zapisano stan gry",
+  "loaded": "Wczytano stan gry",
+  "newWorld": "Utworzono nowy świat",
+  "probed": "Utworzono encję",
+  "error": "Operacja nie powiodła się",
+  "language": "English",
+  "ready": "Gotowe",
+  "stage": "ETAP 0 — SYSTEM ONLINE"
+}

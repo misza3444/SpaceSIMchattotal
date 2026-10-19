@@ -1,0 +1,3 @@
+[
+  { "id": "scout_mk1", "name": { "pl": "Iskra", "en": "Spark" }, "role": "scout", "mass": 4200, "thrust": 13500 }
+]

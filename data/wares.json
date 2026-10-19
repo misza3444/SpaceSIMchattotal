@@ -1,0 +1,5 @@
+[
+  { "id": "ore", "name": { "pl": "Ruda", "en": "Ore" }, "cargoType": "solid", "basePrice": 30 },
+  { "id": "alloy", "name": { "pl": "Stop", "en": "Alloy" }, "cargoType": "container", "basePrice": 94 },
+  { "id": "energy_cell", "name": { "pl": "Ogniwo energii", "en": "Energy Cell" }, "cargoType": "container", "basePrice": 12 }
+]

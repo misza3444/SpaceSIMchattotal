@@ -1,0 +1,20 @@
+{
+  "title": "SPACE SIM // FOUNDATION",
+  "subtitle": "Deterministic simulation • stage 0",
+  "seed": "World seed",
+  "tick": "Simulation tick",
+  "fps": "FPS",
+  "entities": "Entities",
+  "save": "Save",
+  "load": "Load",
+  "new": "New world",
+  "probe": "Add test entity",
+  "saved": "Game state saved",
+  "loaded": "Game state loaded",
+  "newWorld": "New world created",
+  "probed": "Entity created",
+  "error": "Operation failed",
+  "language": "Polski",
+  "ready": "Ready",
+  "stage": "STAGE 0 — SYSTEM ONLINE"
+}
