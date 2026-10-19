@@ -1,6 +1,15 @@
 # SpaceSIM Chat Total — Stage 1: Flight
 
-Playable browser-based space flight prototype built on a deterministic TypeScript simulation core. **Original** ship, station, beacon and asteroid meshes (procedural Three.js geometry). The separate desktop .NET project in `misza3444/spacesim` is untouched.
+Playable browser-based space flight prototype built on a deterministic TypeScript simulation core.
+
+## 🚀 Art Pass 2.0 — available now
+
+The previous hand-built prototype has been joined by **two real CC0 Quaternius spacecraft**, Insurgent and Bob. Open the game and use the **HANGAR PORÓWNAWCZY** panel (upper-right) to switch among **INSURGENT**, **BOB**, and original **ISKRA 0.1**. The choice does not modify physics or save data. You can share a direct preview using `?ship=insurgent`, `?ship=bob`, or `?ship=prototype`.
+
+Improvements include glTF loading, PBR material tuning, image-based reflections, brighter lighting, soft exhaust glow, and toggleable bloom. The original source artists retain credit; assets are tracked in [ASSET_LICENSES](docs/ASSET_LICENSES.md) and the changes documented in [ART_PASS_2](docs/ART_PASS_2.md). This is an **art comparison**, not yet final X4-grade photorealism.
+
+**Real game captures:** [Insurgent](docs/screenshots/ship-insurgent-artpass2.png) · [Bob](docs/screenshots/ship-bob-artpass2.png).
+ **Original** ship, station, beacon and asteroid meshes (procedural Three.js geometry). The separate desktop .NET project in `misza3444/spacesim` is untouched.
 
 ## Quick start
 
