@@ -22,7 +22,7 @@ describe('Art Pass 2 licensed assets',()=>{
       expect(doc.buffers.every(b=>b.uri?.startsWith('data:'))).toBe(true);
       expect(doc.images?.every(im=>Boolean(im.uri?.startsWith('data:')||im.bufferView!==undefined))??true).toBe(true);
     }
-    expect(SHIP_VISUALS.map(x=>x.id)).toEqual(['insurgent','bob','prototype']);
+    expect(SHIP_VISUALS.map(x=>x.id)).toEqual(['vanguard','insurgent','bob','prototype']);
   });
   it('normalizes imported model dimensions and tunes metallic materials',()=>{
     const root=new THREE.Group();

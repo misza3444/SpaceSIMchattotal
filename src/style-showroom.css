@@ -5,7 +5,7 @@
 .showroom-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .showroom-head b{font-size:13px;letter-spacing:.02em}.showroom-head span{font:9px ui-monospace,monospace;color:#76c7ca}
 .showroom p{font-size:11px;color:#96b5c5;margin:8px 0 13px}
-.ship-options{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
+.ship-options{display:grid;grid-template-columns:repeat(2,1fr);gap:5px}
 .ship-option{min-height:54px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:5px;padding:6px 4px;
  color:#a7cbd4;background:#112c3d;border:1px solid #366272;cursor:pointer}
 .ship-option b{font:700 10px ui-monospace,monospace}.ship-option span{font-size:8px;text-align:center}

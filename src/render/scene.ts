@@ -72,22 +72,6 @@ function buildCockpit(): THREE.Group {
   box(frame,[0.35,0.025,0.01],[0.78,-0.53,-1.23],display);
   return frame;
 }
-function buildStation():THREE.Group {
-  const g=new THREE.Group(),metal=material(0x708494),dark=material(0x263b4d),glow=material(0x1bd3c5,0.2,0x0f8f7d);
-  const cylinder=new THREE.Mesh(new THREE.CylinderGeometry(58,58,44,16),dark);
-  cylinder.rotation.z=Math.PI/2;g.add(cylinder);
-  const ring=new THREE.Mesh(new THREE.TorusGeometry(92,11,7,24),metal);
-  ring.rotation.y=Math.PI/4;g.add(ring);
-  for(let i=0;i<8;i++){
-    const angle=i*Math.PI/4;
-    const part=box(g,[16,13,38],[Math.cos(angle)*77,Math.sin(angle)*77,0],metal);
-    part.rotation.z=angle;
-    box(g,[8,3,12],[Math.cos(angle)*103,Math.sin(angle)*103,0],glow);
-  }
-  box(g,[155,8,8],[0,0,0],metal);
-  box(g,[10,10,210],[0,0,0],dark);
-  return g;
-}
 function buildBeacon():THREE.Group {
   const g=new THREE.Group(),steel=material(0xb6a58a),light=new THREE.MeshBasicMaterial({color:0xffbd5e});
   const spine=new THREE.Mesh(new THREE.CylinderGeometry(9,14,110,8),steel);
