@@ -1,0 +1,28 @@
+{
+  "creator": "Viktor Hahn",
+  "source_page": "https://opengameart.org/content/proteron-ships",
+  "archive_url": "https://opengameart.org/sites/default/files/gltf.zip",
+  "license": "CC-BY-4.0",
+  "license_url": "https://creativecommons.org/licenses/by/4.0/",
+  "source_archive_sha256": "c55b967f7c8a93a60149080c8eaae38134e9a191bfd7bef374810d618993b2c4",
+  "files": {
+    "proteron-a.glb": {
+      "original_filename": "gltf/watson.glb",
+      "bytes": 10070816,
+      "sha256": "8d43ea85aca13f2f5286619eb9bca434e518688d71d741916ac80b3e0793d3ca",
+      "mesh_count": 2,
+      "material_count": 2,
+      "normal_mapped_material_count": 1,
+      "pbr_material_count": 2
+    },
+    "proteron-b.glb": {
+      "original_filename": "gltf/pythagoras.glb",
+      "bytes": 8945044,
+      "sha256": "edfae51ec3bf6d9a3be5faa75e329054a3f3a0039a5b207437bc164bbc8699de",
+      "mesh_count": 2,
+      "material_count": 2,
+      "normal_mapped_material_count": 1,
+      "pbr_material_count": 2
+    }
+  }
+}
