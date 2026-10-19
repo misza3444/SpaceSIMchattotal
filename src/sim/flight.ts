@@ -64,7 +64,7 @@ export function stepFlight(pilot: PilotState, input: FlightInput, ship: FlightSh
     angular[i] = clamp((angular[i] ?? 0) + command*(ship.angularAcceleration[i] ?? 0)*dt,
       -ship.maxAngularSpeed,ship.maxAngularSpeed);
     const damping = command === 0 && pilot.assist ? ship.angularDrag*8 : ship.angularDrag;
-    angular[i] *= Math.exp(-damping * dt);
+    angular[i] = (angular[i] ?? 0) * Math.exp(-damping * dt);
   }
   const [pitch,yaw,roll] = angular;
   const halfPitch=pitch*dt/2, halfYaw=-yaw*dt/2, halfRoll=-roll*dt/2;
@@ -108,9 +108,9 @@ export function stepFlight(pilot: PilotState, input: FlightInput, ship: FlightSh
     for (let i=0;i<3;i++) {
       if (pilot.assist && Math.abs(localInput[i] ?? 0) < 0.001) {
         const v = localVelocity[i] ?? 0;
-        acc[i] += -Math.sign(v)*Math.min(Math.abs(v)/dt,ship.assistBraking);
+        acc[i] = (acc[i] ?? 0) - Math.sign(v)*Math.min(Math.abs(v)/dt,ship.assistBraking);
       }
-      acc[i] -= (localVelocity[i] ?? 0)*(ship.drag[i] ?? 0);
+      acc[i] = (acc[i] ?? 0) - (localVelocity[i] ?? 0)*(ship.drag[i] ?? 0);
     }
     pilot.velocity = add(pilot.velocity,scale(rotate(pilot.orientation,acc),dt));
     const maxSpeed = ship.maxSpeed * (pilot.boost ? ship.boostMultiplier : 1);
