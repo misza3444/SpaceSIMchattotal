@@ -1,3 +1,13 @@
 [
-  { "id": "scout_mk1", "name": { "pl": "Iskra", "en": "Spark" }, "role": "scout", "mass": 4200, "thrust": 13500 }
+  {
+    "id": "scout_mk1", "name": { "pl": "Iskra", "en": "Spark" }, "role": "scout",
+    "mass": 4200, "thrust": 97000,
+    "thrusters": { "strafe": 62000, "lift": 68000, "reverse": 56000 },
+    "drag": [0.0015, 0.0015, 0.0012],
+    "angularAcceleration": [1.8, 1.7, 2.2], "angularDrag": 0.7,
+    "maxAngularSpeed": 1.35, "assistBraking": 34,
+    "boostMultiplier": 2.4, "maxSpeed": 360,
+    "travelSpeed": 2400, "travelAcceleration": 450,
+    "travelChargeSeconds": 2.0, "travelCooldownSeconds": 1.3
+  }
 ]

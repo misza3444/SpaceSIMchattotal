@@ -1,0 +1,11 @@
+{
+  "id": "aether-proving-grounds",
+  "name": { "pl": "Poligon Eteru", "en": "Aether Proving Grounds" },
+  "sun": { "position": [-12000, 7000, -24000], "radius": 2600, "color": "#ffd7a1" },
+  "bodies": [
+    { "id": "relay", "name": { "pl": "Przekaźnik Helios", "en": "Helios Relay" }, "kind": "station", "position": [520, 30, -2800], "radius": 145, "color": "#69dfd0" },
+    { "id": "asteroid1", "name": { "pl": "Asteroida A-17", "en": "Asteroid A-17" }, "kind": "asteroid", "position": [-420, -70, -1700], "radius": 118, "color": "#bf9e87" },
+    { "id": "asteroid2", "name": { "pl": "Asteroida B-04", "en": "Asteroid B-04" }, "kind": "asteroid", "position": [130, 180, -3900], "radius": 180, "color": "#94a3b8" },
+    { "id": "beacon", "name": { "pl": "Latarnia Delphi", "en": "Delphi Beacon" }, "kind": "beacon", "position": [0, -40, -950], "radius": 48, "color": "#e9bd73" }
+  ]
+}
