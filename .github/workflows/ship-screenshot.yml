@@ -1,0 +1,42 @@
+name: Ship Screenshot
+
+on:
+  push:
+    paths:
+      - .github/workflows/ship-screenshot.yml
+  workflow_dispatch:
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install
+        run: npm install --no-audit --no-fund
+      - name: Run game and capture ship screenshot
+        run: |
+          set -e
+          npm run dev -- --host 127.0.0.1 > /tmp/spacesim-vite.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:5173/ > /dev/null; then break; fi
+            sleep 1
+          done
+          which google-chrome || true
+          google-chrome --headless --no-sandbox --enable-unsafe-swiftshader --use-gl=angle --use-angle=swiftshader --disable-dev-shm-usage --hide-scrollbars --window-size=1440,900 --virtual-time-budget=6000 --screenshot=spacesim-ship.png http://127.0.0.1:5173/ 2>&1 | tail -30
+          test -s spacesim-ship.png
+          ffmpeg -y -v error -i spacesim-ship.png -vf scale=1024:-2 -quality 75 spacesim-ship.webp
+          echo 'SHIP_SCREENSHOT_BASE64_BEGIN'
+          base64 -w0 spacesim-ship.webp
+          echo
+          echo 'SHIP_SCREENSHOT_BASE64_END'
+      - name: Upload original screenshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: spacesim-ship-stage1
+          path: |
+            spacesim-ship.png
+            spacesim-ship.webp
+          retention-days: 7
