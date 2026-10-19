@@ -1,0 +1,61 @@
+name: SpaceSIM Art Pass 2 Preview
+on:
+  push:
+    paths:
+      - '.github/workflows/art-pass-previews.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install project
+        run: npm install --no-audit --no-fund
+      - name: Capture two actual in-game ship models
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p docs/screenshots
+          npm run dev -- --host 127.0.0.1 > /tmp/space-vite.log 2>&1 &
+          for n in $(seq 1 45); do
+            if curl -fs http://127.0.0.1:5173/ >/dev/null; then break; fi
+            sleep 1
+          done
+          for ship in insurgent bob; do
+            google-chrome --headless --no-sandbox --enable-unsafe-swiftshader --use-gl=angle --use-angle=swiftshader --disable-dev-shm-usage --hide-scrollbars --window-size=1440,900 --virtual-time-budget=9000 --screenshot="docs/screenshots/ship-$ship-artpass2.png" "http://127.0.0.1:5173/?ship=$ship" >"/tmp/space-$ship-chrome.log" 2>&1
+            test -s "docs/screenshots/ship-$ship-artpass2.png"
+            echo "CAPTURED $ship $(wc -c <"docs/screenshots/ship-$ship-artpass2.png") bytes"
+          done
+          python3 -m pip install --quiet --break-system-packages pillow
+          python3 - <<'PY'
+          from PIL import Image
+          for ship in ('insurgent', 'bob'):
+              image=Image.open(f'docs/screenshots/ship-{ship}-artpass2.png').convert('RGB')
+              image.thumbnail((1024,720))
+              image.save(f'/tmp/{ship}.webp',quality=67)
+          PY
+          for ship in insurgent bob; do
+            echo "SHIP_$ship-BASE64-BEGIN"
+            base64 -w0 "/tmp/$ship.webp"
+            echo
+            echo "SHIP_$ship-BASE64-END"
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: spacesim-artpass2-ship-comparison
+          path: docs/screenshots/ship-*-artpass2.png
+          retention-days: 14
+      - name: Publish preview PNGs
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/screenshots/ship-insurgent-artpass2.png docs/screenshots/ship-bob-artpass2.png
+          if ! git diff --cached --quiet; then
+            git commit -m 'docs: capture both imported ships in browser'
+            git push origin HEAD:main
+          fi
