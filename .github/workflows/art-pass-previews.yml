@@ -58,5 +58,7 @@ jobs:
           git add docs/screenshots/ship-insurgent-artpass2.png docs/screenshots/ship-bob-artpass2.png
           if ! git diff --cached --quiet; then
             git commit -m 'docs: capture both imported ships in browser'
+            git fetch origin main
+            git rebase origin/main
             git push origin HEAD:main
           fi
