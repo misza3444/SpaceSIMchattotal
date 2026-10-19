@@ -1,0 +1,50 @@
+name: Import CC0 Spacecraft Models
+on:
+  push:
+    paths:
+      - '.github/workflows/import-quaternius-assets.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  vendor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Download and verify CC0 Quaternius glTF ships
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public/assets/ships
+          upstream='https://raw.githubusercontent.com/euuuuuuan/voidclad-public/440916aabc30abe014cb33ad90bd150bfbf22dd0/assets/vendor/quaternius_ultimate_spaceships'
+          curl -fL --retry 3 --max-time 120 "$upstream/Insurgent.gltf" -o public/assets/ships/insurgent.gltf
+          curl -fL --retry 3 --max-time 120 "$upstream/Bob.gltf" -o public/assets/ships/bob.gltf
+          echo 'a6e75f658d4133bf8e96172a410b1daa8c3a8179f9c77b033f9d9cdaa04cb419  public/assets/ships/insurgent.gltf' | sha256sum --check
+          echo '73f187cd1a11e487a1b20405bfa59d3d9f98ef4960ee64e3f062a7373aa095ad  public/assets/ships/bob.gltf' | sha256sum --check
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          for stem in ('insurgent', 'bob'):
+              path = Path('public/assets/ships')/(stem+'.gltf')
+              doc = json.loads(path.read_text())
+              assert doc['asset']['version'].startswith('2.')
+              assert doc.get('meshes')
+              assert doc.get('buffers')
+              assert all(b.get('uri','').startswith('data:') for b in doc.get('buffers',[])), 'Expected self-contained glTF: ' + stem
+              assert all(im.get('uri', 'data:').startswith('data:') for im in doc.get('images',[])), 'External texture unexpectedly required'
+              print(stem, 'meshes',len(doc['meshes']), 'bytes',path.stat().st_size)
+          PY
+      - name: Commit model assets
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add public/assets/ships/insurgent.gltf public/assets/ships/bob.gltf
+          if git diff --cached --quiet; then
+            echo 'Assets unchanged'
+          else
+            git commit -m 'assets: vendor verified CC0 Quaternius spacecraft'
+            git push origin HEAD:main
+          fi
