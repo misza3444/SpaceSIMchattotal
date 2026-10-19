@@ -32,7 +32,7 @@ describe('Art Pass 2 licensed assets',()=>{
     const wrapper=prepareImportedShip(root);
     const box=new THREE.Box3().setFromObject(wrapper);
     expect(Math.max(...box.getSize(new THREE.Vector3()).toArray())).toBeCloseTo(21,0);
-    expect(mat.metalness).toBeCloseTo(.34);
-    expect(mat.roughness).toBeCloseTo(.48);
+    expect(mat.metalness).toBeCloseTo(.22);
+    expect(mat.roughness).toBeCloseTo(.62);
   });
 });
