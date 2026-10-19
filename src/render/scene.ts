@@ -1,21 +1,184 @@
 import * as THREE from 'three';
+import type { Catalog } from '../data/catalog';
+import type { PilotState, WorldState } from '../sim/types';
+
+export type CameraMode = 'cockpit' | 'chase';
+export interface ScreenMarker {
+  id: string; x: number; y: number; distance: number; visible: boolean;
+}
+const vector = (v: readonly number[]) => new THREE.Vector3(v[0]??0,v[1]??0,v[2]??0);
+const quaternion = (v: readonly number[]) => new THREE.Quaternion(v[0]??0,v[1]??0,v[2]??0,v[3]??1);
+function material(color: number, metalness=0.6, emissive=0):THREE.MeshStandardMaterial {
+  return new THREE.MeshStandardMaterial({color,metalness,roughness:0.4,emissive,emissiveIntensity:emissive?1.5:0});
+}
+function box(parent:THREE.Object3D, size: [number,number,number], pos:[number,number,number], mat:THREE.Material): THREE.Mesh {
+  const mesh=new THREE.Mesh(new THREE.BoxGeometry(...size),mat);
+  mesh.position.set(...pos);parent.add(mesh);return mesh;
+}
+function buildShip(): THREE.Group {
+  const ship=new THREE.Group();
+  const hull=material(0x8499a7),navy=material(0x25394f),edge=material(0x4dbcb5,0.35,0x123d39);
+  const engine=new THREE.MeshStandardMaterial({color:0x48bce2,emissive:0x1c76de,emissiveIntensity:3});
+  const center=new THREE.Mesh(new THREE.ConeGeometry(2.1,13,5),hull);
+  center.rotation.x=-Math.PI/2; center.position.z=-0.3;ship.add(center);
+  box(ship,[3.5,1.6,7],[0,0,2],navy);
+  box(ship,[13,0.35,3.4],[0,-0.2,2.4],hull);
+  for(const side of [-1,1]){
+    const wing=box(ship,[6.1,0.45,2.1],[side*4.65,-0.35,2.1],navy);
+    wing.rotation.y=side*0.12;
+    box(ship,[1,0.8,4.8],[side*6.6,0.1,3],hull);
+    box(ship,[0.18,0.25,4],[side*6.6,0.62,3],edge);
+    const nozzle=new THREE.Mesh(new THREE.CylinderGeometry(1.08,1.3,2.4,12),navy);
+    nozzle.rotation.x=Math.PI/2; nozzle.position.set(side*1.85,-0.25,5.4);ship.add(nozzle);
+    const glow=new THREE.Mesh(new THREE.CircleGeometry(0.83,20),engine);
+    glow.position.set(side*1.85,-0.25,6.72); glow.rotation.y=Math.PI;ship.add(glow);
+  }
+  const canopy=new THREE.Mesh(new THREE.SphereGeometry(1.7,12,8),material(0x224e73,0.4));
+  canopy.scale.set(0.9,0.6,1.8);canopy.position.set(0,0.85,-1.9);ship.add(canopy);
+  ship.traverse(o=>{if(o instanceof THREE.Mesh){o.castShadow=false;o.receiveShadow=false;}});
+  return ship;
+}
+function buildCockpit(): THREE.Group {
+  const frame=new THREE.Group();
+  const metal=material(0x334b5b),display=new THREE.MeshBasicMaterial({color:0x1ad8bc});
+  box(frame,[2.7,0.2,0.3],[0,-0.66,-1.4],metal);
+  box(frame,[0.09,0.95,0.15],[-1.38,-0.13,-1.55],metal);
+  box(frame,[0.09,0.95,0.15],[1.38,-0.13,-1.55],metal);
+  box(frame,[0.9,0.06,0.01],[0,-0.55,-1.23],display);
+  box(frame,[0.35,0.025,0.01],[-0.78,-0.53,-1.23],display);
+  box(frame,[0.35,0.025,0.01],[0.78,-0.53,-1.23],display);
+  return frame;
+}
+function buildStation():THREE.Group {
+  const g=new THREE.Group(),metal=material(0x708494),dark=material(0x263b4d),glow=material(0x1bd3c5,0.2,0x0f8f7d);
+  const cylinder=new THREE.Mesh(new THREE.CylinderGeometry(58,58,44,16),dark);
+  cylinder.rotation.z=Math.PI/2;g.add(cylinder);
+  const ring=new THREE.Mesh(new THREE.TorusGeometry(92,11,7,24),metal);
+  ring.rotation.y=Math.PI/4;g.add(ring);
+  for(let i=0;i<8;i++){
+    const angle=i*Math.PI/4;
+    const part=box(g,[16,13,38],[Math.cos(angle)*77,Math.sin(angle)*77,0],metal);
+    part.rotation.z=angle;
+    box(g,[8,3,12],[Math.cos(angle)*103,Math.sin(angle)*103,0],glow);
+  }
+  box(g,[155,8,8],[0,0,0],metal);
+  box(g,[10,10,210],[0,0,0],dark);
+  return g;
+}
+function buildBeacon():THREE.Group {
+  const g=new THREE.Group(),steel=material(0xb6a58a),light=new THREE.MeshBasicMaterial({color:0xffbd5e});
+  const spine=new THREE.Mesh(new THREE.CylinderGeometry(9,14,110,8),steel);
+  g.add(spine);
+  for(const height of [-35,35]){
+    const ring=new THREE.Mesh(new THREE.TorusGeometry(32,3,8,28),steel);
+    ring.rotation.x=Math.PI/2;ring.position.y=height;g.add(ring);
+  }
+  const ball=new THREE.Mesh(new THREE.SphereGeometry(12,12,8),light);ball.position.y=58;g.add(ball);
+  return g;
+}
+function buildStars():THREE.Points {
+  const positions=new Float32Array(2400*3);
+  let seed=0x92ed;
+  const rand=()=>{seed^=seed<<13;seed^=seed>>>17;seed^=seed<<5;return (seed>>>0)/4294967296;};
+  for(let i=0;i<2400;i++){
+    const z=rand()*2-1,theta=rand()*Math.PI*2,r=20000+rand()*15000;
+    const width=Math.sqrt(1-z*z);
+    positions[i*3]=Math.cos(theta)*width*r;
+    positions[i*3+1]=Math.sin(theta)*width*r;
+    positions[i*3+2]=z*r;
+  }
+  const geo=new THREE.BufferGeometry();
+  geo.setAttribute('position',new THREE.BufferAttribute(positions,3));
+  return new THREE.Points(geo,new THREE.PointsMaterial({color:0xe5f1ff,size:40,sizeAttenuation:true,transparent:true,opacity:0.83,depthWrite:false}));
+}
 export class SpaceView {
-  private readonly scene = new THREE.Scene();
-  private readonly camera = new THREE.PerspectiveCamera(70, 1, 0.1, 10000);
-  private readonly renderer: THREE.WebGLRenderer;
-  constructor(host: HTMLElement) {
-    this.scene.background = new THREE.Color('#040a12');
-    this.camera.position.set(0, 0, 8);
-    this.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  private readonly scene=new THREE.Scene();
+  private readonly camera=new THREE.PerspectiveCamera(73,1,0.08,90000);
+  private readonly renderer:THREE.WebGLRenderer;
+  private readonly ship=buildShip();
+  private readonly cockpit=buildCockpit();
+  private readonly stars=buildStars();
+  private readonly objects=new Map<string,THREE.Object3D>();
+  private readonly currentPos=new THREE.Vector3();
+  private readonly currentQuat=new THREE.Quaternion();
+  private mode:CameraMode='chase';
+  private width=1;private height=1;
+  constructor(private readonly host:HTMLElement,private readonly catalog:Catalog){
+    this.scene.background=new THREE.Color(0x030812);
+    this.renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.75));
+    this.renderer.outputColorSpace=THREE.SRGBColorSpace;
+    this.renderer.toneMapping=THREE.ACESFilmicToneMapping;
+    this.renderer.toneMappingExposure=1.4;
     host.append(this.renderer.domElement);
-    this.resize(host.clientWidth, host.clientHeight);
+    this.scene.add(new THREE.AmbientLight(0x688cb2,0.8));
+    const sun=catalog.sector.sun;
+    const sunLight=new THREE.DirectionalLight(0xffe4c6,3.2);
+    sunLight.position.copy(vector(sun.position));this.scene.add(sunLight);
+    const sunMesh=new THREE.Mesh(new THREE.SphereGeometry(sun.radius,20,14),
+      new THREE.MeshBasicMaterial({color:sun.color}));
+    sunMesh.position.copy(vector(sun.position));this.scene.add(sunMesh);
+    for(const body of catalog.sector.bodies){
+      let object:THREE.Object3D;
+      if(body.kind==='station')object=buildStation();
+      else if(body.kind==='beacon')object=buildBeacon();
+      else {
+        const mesh=new THREE.Mesh(new THREE.IcosahedronGeometry(body.radius*0.85,2),
+          material(Number.parseInt(body.color.slice(1),16),0.1));
+        mesh.rotation.set(0.3,0.6,0.1); object=mesh;
+      }
+      object.position.copy(vector(body.position));this.scene.add(object);this.objects.set(body.id,object);
+    }
+    this.scene.add(this.stars);this.scene.add(this.ship);
+    this.camera.add(this.cockpit);this.scene.add(this.camera);
+    this.setCameraMode('chase');
+    this.resize(host.clientWidth,host.clientHeight);
   }
-  resize(width: number, height: number): void {
-    this.camera.aspect = Math.max(1, width) / Math.max(1, height);
-    this.camera.updateProjectionMatrix();
-    this.renderer.setSize(Math.max(1, width), Math.max(1, height), false);
+  getCanvas():HTMLCanvasElement{return this.renderer.domElement;}
+  setCameraMode(mode:CameraMode):void {
+    this.mode=mode;
+    this.ship.visible=mode==='chase';
+    this.cockpit.visible=mode==='cockpit';
   }
-  draw(alpha: number): void { void alpha; this.renderer.render(this.scene, this.camera); }
-  dispose(): void { this.renderer.dispose(); this.renderer.domElement.remove(); }
+  toggleCamera():CameraMode {this.setCameraMode(this.mode==='chase'?'cockpit':'chase');return this.mode;}
+  getCameraMode():CameraMode {return this.mode;}
+  resize(width:number,height:number):void {
+    this.width=Math.max(1,width);this.height=Math.max(1,height);
+    this.camera.aspect=this.width/this.height;this.camera.updateProjectionMatrix();
+    this.renderer.setSize(this.width,this.height,false);
+  }
+  draw(previous:WorldState,current:WorldState,alpha:number):ScreenMarker[]{
+    const pilot=current.pilot;
+    if(!pilot)return [];
+    const last: PilotState=previous.pilot??pilot;
+    const fraction=Math.max(0,Math.min(1,alpha));
+    this.currentPos.copy(vector(last.position)).lerp(vector(pilot.position),fraction);
+    this.currentQuat.copy(quaternion(last.orientation)).slerp(quaternion(pilot.orientation),fraction);
+    this.ship.position.copy(this.currentPos);this.ship.quaternion.copy(this.currentQuat);
+    const camOffset=this.mode==='chase'?new THREE.Vector3(0,5.4,23):new THREE.Vector3(0,0.95,-1.3);
+    this.camera.position.copy(this.currentPos).add(camOffset.applyQuaternion(this.currentQuat));
+    this.camera.quaternion.copy(this.currentQuat);
+    this.camera.updateMatrixWorld(true);
+    this.stars.position.copy(this.currentPos);
+    const markers:ScreenMarker[]=this.catalog.sector.bodies.map(body=>{
+      const clip=vector(body.position).project(this.camera);
+      return {
+        id:body.id,x:(clip.x*0.5+0.5)*this.width,y:(-clip.y*0.5+0.5)*this.height,
+        distance:vector(body.position).distanceTo(this.currentPos),
+        visible:clip.z>=-1&&clip.z<=1&&Math.abs(clip.x)<=0.96&&Math.abs(clip.y)<=0.93
+      };
+    });
+    this.renderer.render(this.scene,this.camera);
+    return markers;
+  }
+  dispose():void {
+    this.scene.traverse(child=>{
+      if(child instanceof THREE.Mesh||child instanceof THREE.Points){
+        child.geometry.dispose();
+        const mats=Array.isArray(child.material)?child.material:[child.material];
+        for(const mat of mats) mat.dispose();
+      }
+    });
+    this.renderer.dispose();this.renderer.domElement.remove();
+  }
 }
