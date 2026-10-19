@@ -1,4 +1,9 @@
 import * as THREE from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { loadShipVisual, SHIP_VISUALS, type ShipVisualId } from './ship-library';
 import type { Catalog } from '../data/catalog';
 import type { PilotState, WorldState } from '../sim/types';
 
@@ -95,7 +100,14 @@ export class SpaceView {
   private readonly scene=new THREE.Scene();
   private readonly camera=new THREE.PerspectiveCamera(73,1,0.08,90000);
   private readonly renderer:THREE.WebGLRenderer;
-  private readonly ship=buildShip();
+  private readonly ship=new THREE.Group();
+  private readonly oldHull=buildShip();
+  private readonly loadedHulls=new Map<ShipVisualId,THREE.Group>();
+  private readonly loadingHulls=new Map<ShipVisualId,Promise<THREE.Group>>();
+  private visual:ShipVisualId='prototype';
+  private readonly engineGlow=new THREE.Group();
+  private readonly composer:EffectComposer;
+  private bloomEnabled=true;
   private readonly cockpit=buildCockpit();
   private readonly stars=buildStars();
   private readonly objects=new Map<string,THREE.Object3D>();
@@ -111,7 +123,12 @@ export class SpaceView {
     this.renderer.toneMapping=THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure=1.4;
     host.append(this.renderer.domElement);
-    this.scene.add(new THREE.AmbientLight(0x688cb2,0.8));
+    this.scene.add(new THREE.AmbientLight(0x8fb0db,1.3));
+    this.scene.add(new THREE.HemisphereLight(0x9fd5ff,0x20354f,2.1));
+    const rim=new THREE.DirectionalLight(0x50baf5,2.6);
+    rim.position.set(15,8,35);this.scene.add(rim);
+    const bounce=new THREE.DirectionalLight(0xffbf8b,1.2);
+    bounce.position.set(-30,-15,-12);this.scene.add(bounce);
     const sun=catalog.sector.sun;
     const sunLight=new THREE.DirectionalLight(0xffe4c6,3.2);
     sunLight.position.copy(vector(sun.position));this.scene.add(sunLight);
@@ -130,9 +147,53 @@ export class SpaceView {
       object.position.copy(vector(body.position));this.scene.add(object);this.objects.set(body.id,object);
     }
     this.scene.add(this.stars);this.scene.add(this.ship);
+    this.ship.add(this.oldHull);
+    const glowMaterial=new THREE.SpriteMaterial({
+      color:0x55cffa,transparent:true,opacity:0.65,
+      depthWrite:false,blending:THREE.AdditiveBlending
+    });
+    const exhaust=new THREE.Sprite(glowMaterial);
+    exhaust.position.set(0,-0.2,8);exhaust.scale.set(8,8,1);
+    this.engineGlow.add(exhaust);
+    const engineLight=new THREE.PointLight(0x269efb,15,30);
+    engineLight.position.set(0,-0.2,7);this.engineGlow.add(engineLight);
+    this.ship.add(this.engineGlow);
+    this.composer=new EffectComposer(this.renderer);
+    this.composer.addPass(new RenderPass(this.scene,this.camera));
+    this.composer.addPass(new UnrealBloomPass(new THREE.Vector2(800,600),0.62,0.3,0.91));
+    this.composer.addPass(new OutputPass());
     this.camera.add(this.cockpit);this.scene.add(this.camera);
     this.setCameraMode('chase');
     this.resize(host.clientWidth,host.clientHeight);
+  }
+  getSelectedHull():ShipVisualId{return this.visual;}
+  isBloomEnabled():boolean{return this.bloomEnabled;}
+  toggleBloom():boolean{this.bloomEnabled=!this.bloomEnabled;return this.bloomEnabled;}
+  async setShipVisual(id:ShipVisualId):Promise<void>{
+    const candidate=SHIP_VISUALS.find(model=>model.id===id);
+    if(!candidate)throw new Error('Unknown ship visual: '+id);
+    if(id==='prototype'){
+      this.visual=id;
+      this.oldHull.visible=true;
+      for(const hull of this.loadedHulls.values())hull.visible=false;
+      return;
+    }
+    let object=this.loadedHulls.get(id);
+    if(!object){
+      let pending=this.loadingHulls.get(id);
+      if(!pending){
+        pending=loadShipVisual(candidate);
+        this.loadingHulls.set(id,pending);
+      }
+      try{object=await pending;}finally{this.loadingHulls.delete(id);}
+      if(!this.loadedHulls.has(id)){
+        this.ship.add(object);
+        this.loadedHulls.set(id,object);
+      }
+    }
+    this.visual=id;
+    this.oldHull.visible=false;
+    for(const [other,hull] of this.loadedHulls)hull.visible=other===id;
   }
   getCanvas():HTMLCanvasElement{return this.renderer.domElement;}
   setCameraMode(mode:CameraMode):void {
@@ -146,6 +207,7 @@ export class SpaceView {
     this.width=Math.max(1,width);this.height=Math.max(1,height);
     this.camera.aspect=this.width/this.height;this.camera.updateProjectionMatrix();
     this.renderer.setSize(this.width,this.height,false);
+    this.composer.setSize(this.width,this.height);
   }
   draw(previous:WorldState,current:WorldState,alpha:number):ScreenMarker[]{
     const pilot=current.pilot;
@@ -168,7 +230,8 @@ export class SpaceView {
         visible:clip.z>=-1&&clip.z<=1&&Math.abs(clip.x)<=0.96&&Math.abs(clip.y)<=0.93
       };
     });
-    this.renderer.render(this.scene,this.camera);
+    if(this.bloomEnabled)this.composer.render();
+    else this.renderer.render(this.scene,this.camera);
     return markers;
   }
   dispose():void {
@@ -179,6 +242,7 @@ export class SpaceView {
         for(const mat of mats) mat.dispose();
       }
     });
+    this.composer.dispose();
     this.renderer.dispose();this.renderer.domElement.remove();
   }
 }
