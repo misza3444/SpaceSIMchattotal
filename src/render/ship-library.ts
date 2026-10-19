@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-export type ShipVisualId = 'vanguard' | 'insurgent' | 'bob' | 'prototype';
+export type ShipVisualId = 'proteron-a' | 'proteron-b' | 'vanguard' | 'insurgent' | 'bob' | 'prototype';
 export interface ShipVisualDefinition {
   id: ShipVisualId;
   label: string;
@@ -10,6 +10,16 @@ export interface ShipVisualDefinition {
   uri: string | null;
 }
 export const SHIP_VISUALS: readonly ShipVisualDefinition[] = [
+  {
+    id: 'proteron-a', label: 'WATSON', source: 'Viktor Hahn · CC BY 4.0',
+    description: 'Autentyczny statek GLB z pełnymi mapami PBR, metal/roughness/normal',
+    uri: '/assets/ships/proteron-a.glb'
+  },
+  {
+    id: 'proteron-b', label: 'PYTHAGORAS', source: 'Viktor Hahn · CC BY 4.0',
+    description: 'Druga sylwetka statku z pełnymi mapami PBR i emisyjnymi detalami',
+    uri: '/assets/ships/proteron-b.glb'
+  },
   {
     id: 'vanguard', label: 'VANGUARD', source: 'SpaceSIM · pełny PBR',
     description: 'Autorski okręt: panele PBR, wzmocnienia, dysze, radiatory', uri: null
@@ -55,8 +65,10 @@ export function prepareImportedShip(root: THREE.Group): THREE.Group {
       if (!(material instanceof THREE.MeshStandardMaterial)) continue;
       // Preserve original Quaternius diffuse textures while giving hulls controlled
       // specular response. This is a PBR-tuned material, not a 4K PBR texture set.
-      material.metalness = 0.22;
-      material.roughness = 0.62;
+      if (!material.metalnessMap) material.metalness = 0.22;
+      else material.metalness = 1;
+      if (!material.roughnessMap) material.roughness = 0.62;
+      else material.roughness = 1;
       material.envMapIntensity = 1;
       material.needsUpdate = true;
     }

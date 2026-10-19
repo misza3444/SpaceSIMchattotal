@@ -8,26 +8,28 @@ function getInitialShip(): ShipVisualId {
     const saved=window.localStorage.getItem('spacesim-visual-v1');
     if(SHIP_VISUALS.some(v=>v.id===saved))return saved as ShipVisualId;
   }catch{/* private browsing */}
-  return 'vanguard';
+  return 'proteron-a';
 }
 export class ShipShowroom {
   private readonly buttons=new Map<ShipVisualId,HTMLButtonElement>();
   private readonly status:HTMLElement;
   private readonly activeName:HTMLElement;
   private readonly bloom:HTMLButtonElement;
+  private readonly credits:HTMLAnchorElement;
   private request=0;
   constructor(host:HTMLElement,private readonly view:SpaceView){
     const panel=document.createElement('section');
     panel.className='showroom';
-    panel.innerHTML=`<div class="showroom-overline">SPACE SIM // ART PASS 3.0</div>
+    panel.innerHTML=`<div class="showroom-overline">SPACE SIM // ART PASS 4.0</div>
       <div class="showroom-head"><b>HANGAR PORÓWNAWCZY</b><span>GLTF / PBR</span></div>
       <p>Przełącz kadłub bez zmiany fizyki lotu</p>
       <div id="ship-options" class="ship-options"></div>
       <div class="showroom-details"><span id="active-ship"></span><button type="button" id="bloom"></button></div>
       <div class="showroom-status" id="ship-status" aria-live="polite">Wczytywanie modeli…</div>
-      <a href="https://polyhaven.com/a/blue_metal_plate" target="_blank" rel="noopener noreferrer">ŹRÓDŁA PBR: POLY HAVEN / CC0 ↗</a>`;
+      <a id="model-credits" href="https://opengameart.org/content/proteron-ships" target="_blank" rel="noopener noreferrer">AUTOR: VIKTOR HAHN / CC BY 4.0 ↗</a>`;
     host.append(panel);
     this.status=panel.querySelector('#ship-status')!;
+    this.credits=panel.querySelector('#model-credits')!;
     this.activeName=panel.querySelector('#active-ship')!;
     this.bloom=panel.querySelector('#bloom')!;
     this.bloom.addEventListener('click',()=>{
@@ -59,6 +61,9 @@ export class ShipShowroom {
       if(sequence!==this.request)return;
       const definition=SHIP_VISUALS.find(v=>v.id===id)!;
       this.activeName.textContent=definition.description;
+      const byHahn=id==='proteron-a'||id==='proteron-b';
+      this.credits.href=byHahn?'https://opengameart.org/content/proteron-ships':id==='insurgent'||id==='bob'?'https://quaternius.com/packs/ultimatespaceships.html':'https://polyhaven.com/a/blue_metal_plate';
+      this.credits.textContent=byHahn?'AUTOR: VIKTOR HAHN / CC BY 4.0 ↗':id==='insurgent'||id==='bob'?'MODELE: QUATERNIUS / CC0 ↗':'MATERIAŁY: POLY HAVEN / CC0 ↗';
       this.status.textContent=!definition.uri?'MODEL AUTORSKI · '+definition.source:'MODEL 3D WCZYTANY · '+definition.source;
       try{window.localStorage.setItem('spacesim-visual-v1',id);}catch{/* persistence optional */}
     }catch(error){
