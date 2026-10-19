@@ -1,10 +1,16 @@
-name: SpaceSIM Art Pass 2 Preview
+name: SpaceSIM Art Pass 3 Preview
 on:
   push:
     paths:
       - '.github/workflows/art-pass-previews.yml'
       - 'src/render/scene.ts'
+      - 'src/render/station.ts'
+      - 'src/render/vanguard.ts'
+      - 'src/render/pbr-materials.ts'
   workflow_dispatch:
+concurrency:
+  group: space-art-preview
+  cancel-in-progress: true
 permissions:
   contents: write
 jobs:
@@ -17,7 +23,7 @@ jobs:
           node-version: '22'
       - name: Install project
         run: npm install --no-audit --no-fund
-      - name: Capture two actual in-game ship models
+      - name: Capture three in-game ship models and the station
         shell: bash
         run: |
           set -euo pipefail
@@ -27,20 +33,20 @@ jobs:
             if curl -fs http://127.0.0.1:5173/ >/dev/null; then break; fi
             sleep 1
           done
-          for ship in insurgent bob; do
-            google-chrome --headless --no-sandbox --enable-unsafe-swiftshader --use-gl=angle --use-angle=swiftshader --disable-dev-shm-usage --hide-scrollbars --window-size=1440,900 --virtual-time-budget=9000 --screenshot="docs/screenshots/ship-$ship-artpass2.png" "http://127.0.0.1:5173/?ship=$ship" >"/tmp/space-$ship-chrome.log" 2>&1
-            test -s "docs/screenshots/ship-$ship-artpass2.png"
-            echo "CAPTURED $ship $(wc -c <"docs/screenshots/ship-$ship-artpass2.png") bytes"
+          for ship in vanguard insurgent bob; do
+            google-chrome --headless --no-sandbox --enable-unsafe-swiftshader --use-gl=angle --use-angle=swiftshader --disable-dev-shm-usage --hide-scrollbars --window-size=1440,900 --virtual-time-budget=9000 --screenshot="docs/screenshots/ship-$ship-artpass3.png" "http://127.0.0.1:5173/?ship=$ship" >"/tmp/space-$ship-chrome.log" 2>&1
+            test -s "docs/screenshots/ship-$ship-artpass3.png"
+            echo "CAPTURED $ship $(wc -c <"docs/screenshots/ship-$ship-artpass3.png") bytes"
           done
           python3 -m pip install --quiet --break-system-packages pillow
           python3 - <<'PY'
           from PIL import Image
-          for ship in ('insurgent', 'bob'):
-              image=Image.open(f'docs/screenshots/ship-{ship}-artpass2.png').convert('RGB')
+          for ship in ('vanguard', 'insurgent', 'bob'):
+              image=Image.open(f'docs/screenshots/ship-{ship}-artpass3.png').convert('RGB')
               image.thumbnail((1024,720))
               image.save(f'/tmp/{ship}.webp',quality=67)
           PY
-          for ship in insurgent bob; do
+          for ship in vanguard insurgent bob; do
             echo "SHIP_$ship-BASE64-BEGIN"
             base64 -w0 "/tmp/$ship.webp"
             echo
@@ -48,16 +54,16 @@ jobs:
           done
       - uses: actions/upload-artifact@v4
         with:
-          name: spacesim-artpass2-ship-comparison
-          path: docs/screenshots/ship-*-artpass2.png
+          name: spacesim-artpass3-ship-comparison
+          path: docs/screenshots/ship-*-artpass3.png
           retention-days: 14
       - name: Publish preview PNGs
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add docs/screenshots/ship-insurgent-artpass2.png docs/screenshots/ship-bob-artpass2.png
+          git add docs/screenshots/ship-vanguard-artpass3.png docs/screenshots/ship-insurgent-artpass3.png docs/screenshots/ship-bob-artpass3.png
           if ! git diff --cached --quiet; then
-            git commit -m 'docs: capture both imported ships in browser'
+            git commit -m 'docs: capture Vanguard, Insurgent and Bob in browser'
             git fetch origin main
             git rebase origin/main
             git push origin HEAD:main
