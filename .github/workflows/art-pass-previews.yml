@@ -3,6 +3,7 @@ on:
   push:
     paths:
       - '.github/workflows/art-pass-previews.yml'
+      - 'src/render/scene.ts'
   workflow_dispatch:
 permissions:
   contents: write
