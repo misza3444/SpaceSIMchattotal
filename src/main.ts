@@ -1,4 +1,6 @@
 import './style.css';
+import './style-showroom.css';
+import { ShipShowroom } from './ui/showroom';
 import { Simulation, FIXED_DT } from './sim/simulation';
 import { FixedStepClock } from './sim/clock';
 import { SpaceView } from './render/scene';
@@ -33,6 +35,7 @@ const hud=new Dashboard(root.querySelector<HTMLDivElement>('#panel')!,catalog,co
   camera:()=>{view.toggleCamera();},
   language:()=>hud.setLanguage(hud.getLanguage()==='pl'?'en':'pl')
 });
+new ShipShowroom(root.querySelector<HTMLDivElement>('#panel')!,view);
 window.addEventListener('resize',()=>view.resize(viewport.clientWidth,viewport.clientHeight));
 let frameCount=0,fps=0,measureStart=0,lastHud=0,gamepad=false;
 function frame(timestampMs:number):void {

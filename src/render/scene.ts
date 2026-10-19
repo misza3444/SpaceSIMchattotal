@@ -105,6 +105,7 @@ export class SpaceView {
   private readonly loadedHulls=new Map<ShipVisualId,THREE.Group>();
   private readonly loadingHulls=new Map<ShipVisualId,Promise<THREE.Group>>();
   private visual:ShipVisualId='prototype';
+  private requestedVisual:ShipVisualId='prototype';
   private readonly engineGlow=new THREE.Group();
   private readonly composer:EffectComposer;
   private bloomEnabled=true;
@@ -170,6 +171,7 @@ export class SpaceView {
   isBloomEnabled():boolean{return this.bloomEnabled;}
   toggleBloom():boolean{this.bloomEnabled=!this.bloomEnabled;return this.bloomEnabled;}
   async setShipVisual(id:ShipVisualId):Promise<void>{
+    this.requestedVisual=id;
     const candidate=SHIP_VISUALS.find(model=>model.id===id);
     if(!candidate)throw new Error('Unknown ship visual: '+id);
     if(id==='prototype'){
@@ -191,6 +193,7 @@ export class SpaceView {
         this.loadedHulls.set(id,object);
       }
     }
+    if(this.requestedVisual!==id)return;
     this.visual=id;
     this.oldHull.visible=false;
     for(const [other,hull] of this.loadedHulls)hull.visible=other===id;
