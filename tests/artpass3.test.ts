@@ -14,7 +14,9 @@ describe('Art pass 3 physical assets',()=>{
       if(node instanceof THREE.Mesh) meshes++;
       if(node instanceof THREE.InstancedMesh) instanced+=node.count;
     });
-    expect(meshes).toBeGreaterThan(100);
+    expect(station.userData.sourceMeshes).toBeGreaterThan(100);
+    expect(meshes).toBeLessThan(25);
+    expect(station.userData.drawCalls).toBeLessThan(25);
     expect(instanced).toBeGreaterThan(100);
     const size=new THREE.Box3().setFromObject(station).getSize(new THREE.Vector3());
     expect(size.x).toBeGreaterThan(500);
@@ -24,7 +26,7 @@ describe('Art pass 3 physical assets',()=>{
     station.traverse(node=>{
       if(node instanceof THREE.Mesh && node.material instanceof THREE.MeshStandardMaterial && node.material.normalMap)textured++;
     });
-    expect(textured).toBeGreaterThan(10);
+    expect(textured).toBeGreaterThan(1);
   });
   it('builds a 3D Vanguard with asymmetric hard-surface details and PBR assignments',()=>{
     const ship=createVanguardPbrShip();

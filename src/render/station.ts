@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import { createPbrMaterial, type PbrTextureSet } from './pbr-materials';
 
 type Finish = 'blue' | 'worn';
@@ -43,6 +44,53 @@ function setInstancedBox(parent:THREE.Group, specs:{pos:THREE.Vector3; scale:THR
   m.instanceMatrix.needsUpdate=true;
   m.computeBoundingSphere();
   parent.add(m);
+}
+
+/**
+ * Batches static meshes per material and finish. Dock components remain distinct
+ * authoring modules, but render as a handful of GPU draws after construction.
+ * Navigation beacons already use InstancedMesh and stay instanced.
+ */
+function batchStaticMeshes(root: THREE.Group): void {
+  root.updateMatrixWorld(true);
+  const sources: THREE.Mesh[]=[];
+  root.traverse(child=>{
+    if(child instanceof THREE.Mesh && !(child instanceof THREE.InstancedMesh))
+      sources.push(child);
+  });
+  const groups=new Map<string,{mat:THREE.Material;finish?:Finish; meshes:THREE.Mesh[]}>();
+  for(const mesh of sources){
+    const mat=mesh.material;
+    if(Array.isArray(mat))continue;
+    const finish=mesh.userData.finish as Finish|undefined;
+    const key=mat.uuid+':'+(finish??'bare');
+    let target=groups.get(key);
+    if(!target){target={mat,meshes:[]};if(finish)target.finish=finish;groups.set(key,target);}
+    target.meshes.push(mesh);
+  }
+  root.userData.sourceMeshes=sources.length;
+  for(const bucket of groups.values()){
+    if(bucket.meshes.length<=1)continue;
+    const baked=bucket.meshes.map(mesh=>{
+      const geometry=mesh.geometry.clone();
+      geometry.applyMatrix4(mesh.matrixWorld);
+      return geometry;
+    });
+    const merged=mergeGeometries(baked,false);
+    for(const clone of baked)clone.dispose();
+    if(!merged)continue; // Unsupported attribute layout: preserve original meshes.
+    for(const original of bucket.meshes){
+      original.parent?.remove(original);
+      original.geometry.dispose();
+    }
+    const combined=new THREE.Mesh(merged,bucket.mat);
+    combined.name='GPU-batched static station surfaces';
+    if(bucket.finish)combined.userData.finish=bucket.finish;
+    root.add(combined);
+  }
+  let drawCalls=0;
+  root.traverse(child=>{if(child instanceof THREE.Mesh)drawCalls++;});
+  root.userData.drawCalls=drawCalls;
 }
 
 export function createModularSpaceStation():THREE.Group {
@@ -170,6 +218,7 @@ export function createModularSpaceStation():THREE.Group {
   root.userData.stationType='modular-shipyard';
   root.userData.collisionRadius=520;
   root.userData.panelSize=PANEL_SIZE;
+  batchStaticMeshes(root);
   return root;
 }
 
